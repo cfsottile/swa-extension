@@ -4,19 +4,30 @@
   "name": "SWA",
   "version": "1.0",
   
-  // "background": {
-  //   "scripts": ["background.js"]
-  // },
+  "content_scripts": [
+    {
+      "matches": ["*://*.imdb.com/*"],
+      "js": ["content_scripts/content_script.js"]
+    }
+  ],
+
+  "background": {
+    "scripts": ["background.js"]
+  },
 
   "permissions": [
     "activeTab",
     "tabs"
   ],
 
-  "sidebar_action": {
-    "default_title": "SWA",
-    "default_panel": "sidebar/sidebar.html"
+  "browser_action": {
+    "default_title": "SWA"
   }
+
+  // "sidebar_action": {
+  //   "default_title": "SWA",
+  //   "default_panel": "sidebar/sidebar.html"
+  // }
 
 //   "web_accessible_resources": [
 //     "viewer.html"
