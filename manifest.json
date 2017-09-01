@@ -7,7 +7,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.imdb.com/*"],
-      "js": ["content_scripts/content_script.js"]
+      "js": ["content_script.js"]
     }
   ],
 
