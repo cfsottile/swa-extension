@@ -42,7 +42,11 @@ function setStyles(sidebar) {
 }
 
 function setScripts(doc) {
-    doc.getElementById("selector-button").onclick = select;
+    doc.getElementById("selector-button").onclick = select("selector");
+    doc.getElementById("builder-select").selectedIndex = -1;
+    doc.getElementById("builder-select").onchange = adjustBuilderSelection;
+    doc.getElementById("injector-button").onclick = select("injector");
+    doc.getElementById("augment-button").onclick = preAugment;
 }
 
 function unloadSidebar() {
@@ -53,7 +57,7 @@ function unloadSidebar() {
 }
 
 browser.runtime.onMessage.addListener(request => {
-    console.log(request);
+    // console.log(request);
     // return Promise.resolve({response: run(request.codop, request.args)});
     run(request);
 });
@@ -62,56 +66,138 @@ function run(request) {
     return ops[request.codop](request.args);
 }
 
-var ops = {
+const ops = {
     "browser-action": onClickedBrowserAction,
 }
 
-function select() {
-    console.log("select");
-    // habilitar el highlight
-    document.addEventListener("dblclick", getXpath);
+selectionCallbacks = {
+    "selector": getXpath("selector"),
+    "injector": getXpath("injector")
 }
 
-function getXpath(mouseEvent) {
-    document.removeEventListener("dblclick", getXpath);
-    // deshabilitar el hightlight
-    document.getElementById("selector-xpath-label").textContent = createXPathFromElement(mouseEvent.target);
+function select(stage) {
+    return () => document.addEventListener("dblclick", selectionCallbacks[stage])
 }
 
-function preAugment(args) {
-    let selection = document.getElementById("selector-xpath").value;
-    if (!document.getElementById("selector-many").value) {
+function getXpath(stage) {
+    return mouseEvent => {
+        document.removeEventListener("dblclick", selectionCallbacks[stage]);
+        // disable hightlighting
+        document.getElementById(stage + "-xpath-label").textContent =
+            createXPathFromElement(mouseEvent.target);
+    }
+} 
+
+function adjustBuilderSelection() {
+    switch (document.getElementById("builder-select").value) {
+        case "N - N - N":
+            renderBuilderInput(1);
+            break;
+        case "N - M - 1":
+            renderBuilderInput(3);
+            break;
+        // cases "N - M - N" &  "N - N - 1"
+        default:
+            renderBuilderInput(2);
+            break;
+    }
+}
+
+function renderBuilderInput(n) {
+    let textAreasDiv = document.createElement("div");
+    addTextAreas(textAreasDiv, n);
+    let builderDiv = document.getElementById("builder-div");
+    builderDiv.removeChild(builderDiv.lastChild);
+    builderDiv.appendChild(textAreasDiv);
+}
+
+function addTextAreas(textAreasDiv, n) {
+    for (var i = 1; i <= n; i++) {
+        let area = document.createElement("textarea");
+        area.id = "building-" + i;
+        textAreasDiv.appendChild(area);
+    }
+    // console.log(textAreasDiv);
+}
+
+function genSelect() {
+    const xpath = document.getElementById("selector-xpath-label").textContent;
+    let selection = lookupElementByXPath(xpath);
+    if (!document.getElementById("selector-many").checked) {
         selection = [selection];
     }
-    let select = gSelect(() => selection);
-    
-    let extractionStrategy = document.getElementById("extractor-select").value;
-    let extract = gExtract(extractionStrategies[extractionStrategy]);
-    
-    let templateQuery = document.getElementById("query").value;
-    let fetch = gFetch(templateQuery, autoParser(templateQuery));
-    
-    // ...
-    
-    // augment(select, extract, fetch, build, inject);
-
-    return true;
+    return gSelect(() => selection);
 }
 
-extractionStrategies = {
-    "textContent": (node) => node.textContent,
+function genExtract() {
+    const extractionStrategy = document.getElementById("extractor-select").value;
+    return gExtract(extractionStrategies[extractionStrategy]);
+}
+
+function genFetch() {
+    const templateQuery = document.getElementById("query").value;
+    return gFetch(templateQuery, autoParser(templateQuery));
+}
+
+function genBuild() {
+    switch (document.getElementById("builder-select").value) {
+        case "N - N - N":
+            builderInputs = getBuilderInputs(1);
+            return gBuildNNN(builderInputs[0]);
+        case "N - N - 1":
+            builderInputs = getBuilderInputs(2);
+            return gBuildNN1(builderInputs[0], builderInputs[1]);
+        case "N - M - N":
+            builderInputs = getBuilderInputs(2);
+            return gBuildNMN(builderInputs[0], builderInputs[1]);
+        case "N - M - 1":
+            builderInputs = getBuilderInputs(3);
+            return gBuildNM1(builderInputs[0], builderInputs[1], builderInputs[2]);
+    }
+}
+
+function getBuilderInputs(n) {
+    let arr = [];
+    for (var i = 1; i <= n; i++) {
+        arr.push(document.getElementById("building-" + i).value);
+    }
+    return arr;
+}
+
+function genInject() {
+    const xpath = document.getElementById("injector-xpath-label").textContent;
+    const many = document.getElementById("injector-many").checked;
+    const strategy = document.getElementById("injector-select").value;
+    if (many) {
+        return gInjectN(() => lookupElementByXPath(xpath), injectionStrategies[strategy]);
+    } else {
+        return gInject1(() => lookupElementByXPath(xpath), injectionStrategies[strategy]);
+    }
+}
+
+function preAugment() {
+    console.log("SOY EL CODIGO NUEVO");
+    augment(genSelect(), genExtract(), genFetch(), genBuild(), genInject());
+}
+
+const extractionStrategies = {
+    "text content": (node) => node.textContent,
     "href": (node) => node.href
 };
 
 function autoParser(templateQuery) {
     return (data) => {
-        let projection = templateQuery.match(/\s\?(.*?)\s/g);
+        const projection = templateQuery.split("where {")[0].match(/\s\?(.*?)\s/g);
         let result = {};
         projection
             .map((e) => e.slice(2, e.length - 1))
             .forEach((e) => result[e] = data.results.bindings[0][e].value);
         return result;
     }
+}
+
+const injectionStrategies = {
+    "append": (targetNode, nodeToInject) => targetNode.appendChild(nodeToInject)
 }
 
 function sidebarHtml() {
@@ -128,7 +214,6 @@ function sidebarHtml() {
             <input type="checkbox" id="selector-many"> <label>Many</label>
           </div>
           <div style="margin:10px">
-            
             <label id="selector-xpath-label"></label>
           </div>
         </div>
@@ -159,8 +244,13 @@ function sidebarHtml() {
     
         <div id="builder" style="margin:10px">
           <h3>Building</h3>
-          <div style="margin:10px">
-            <textarea></textarea>
+          <div id="builder-div" style="margin:10px">
+            <select id="builder-select">
+              <option>N - N - N</option>
+              <option>N - N - 1</option>
+              <option>N - M - N</option>
+              <option>N - M - 1</option>
+            </select>
           </div>
         </div>
         
@@ -169,20 +259,20 @@ function sidebarHtml() {
         <div id="injector" style="margin:10px">
           <h3>Injection</h3>
           <div style="margin:10px">
-            <input type="button" id="injector-button" value="Select node" onclick="select()">
-            <select>
-              <option>insert after</option>
-              <option>insert before</option>
+            <input type="button" id="injector-button" value="Select node">
+            <input type="checkbox" id="injector-many"> <label>Many</label>
+            <select id="injector-select">
+              <option>append</option>
             </select>
           </div>
           <div style="margin:10px">
-            <input type="text" id="selector-xpath" disabled>
+            <label id="injector-xpath-label"></label>
           </div>      
         </div>
         
         <hr>
     
-        <input type="button" value="Augment" style="display: block; margin: 0 auto; margin-top: 30px">
+        <input type="button" id="augment-button" value="Augment" style="display: block; margin: 0 auto; margin-top: 30px">
         </div>
     `;
 }
@@ -221,3 +311,179 @@ function lookupElementByXPath(path) {
     var result = evaluator.evaluate(path, document.documentElement, null,XPathResult.FIRST_ORDERED_NODE_TYPE, null); 
     return  result.singleNodeValue; 
 } 
+
+// =================================
+// ==  augmentation.js  ============
+// =================================
+
+// helpers
+
+function updateArtifact(curr,fn,prev) {
+    return (artifact) => {
+        artifact[curr] = fn(artifact[prev]);
+        return artifact;
+    };
+}
+
+function getValue(property) {
+    return (obj) => {
+        return obj[property];
+    };
+}
+
+function getElementByXpath (path) {
+    return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+}
+
+
+// augmentation functions
+
+function augment(select, extract, fetch, build, inject) {
+    inject(build(fetch(extract(select()))));
+}
+
+// selection functions
+
+function gSelect(parser) {
+    return () => {
+        return parser().map((element) => { return {"selected": element}; });
+    };
+}
+
+// extraction functions
+
+// :: (HtmlNode -> [String]) -> ([{"selected": HtmlNode}] -> [{"selected": HtmlNode, "extracted": [String]}])
+function gExtract(parser) {
+    return function(artifacts) {
+        logAugmentationData("gExtract", artifacts);
+        return artifacts.map(updateArtifact("extracted",parser,"selected"));
+    };
+}
+
+// fetching functions
+
+// ::
+function gFetch(baseQuery, parser) {
+    return function(artifacts) {
+        logAugmentationData("gFetch", artifacts);
+        // asdasdasd.asdasd;
+        // logAugmentationData("gFetch", artifacts
+        //                                 .map(updateArtifact("fetched",query(baseQuery),"extracted"))
+        //                                 .map(updateArtifact("fetched",parser,"fetched")));
+        return artifacts
+            .map(updateArtifact("fetched",query(baseQuery),"extracted"))
+            .map(updateArtifact("fetched",parser,"fetched"));
+    };
+}
+
+function query(base) {
+    return function(data) {
+        logAugmentationData("query", buildURI(buildQuery(base, data)));
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', buildURI(buildQuery(base, data)), false);
+        xhr.send();
+        return JSON.parse(xhr.responseText);
+    };
+}
+
+function buildURI(query) {
+    return "https://dbpedia.org/sparql?query=" + encodeURIComponent(query) + "&format=json";
+}
+
+// args will be a map
+function buildQuery(base, args) {
+    return fulfillTemplate(base, args);
+}
+
+// building functions
+
+function gBuildNNN(template) {
+    return function(artifacts) {
+        logAugmentationData("gBuildNNN", artifacts);
+        return artifacts.map(updateArtifact("built",fulfillHtml(template),"fetched"));
+    };
+}
+
+function gBuildNN1(template1,template2) {
+    return function(artifacts) {
+        logAugmentationData("gBuildNN1", artifacts);
+        var tmpArtifacts = gBuildNNN(template1)(artifacts);
+        return fulfillHtml(template2)({ "data": nodeToString(fold(tmpArtifacts.map(getValue("built")))) });
+    };
+}
+
+function gBuildNMN(template1,template2) {
+    return function(artifacts) {
+        logAugmentationData("gBuildNMN", artifacts);
+        var tmpArtifacts = artifacts.map((artifact) => {
+            artifact.built = artifact.fetched.map(fulfillHtml(template1));
+            return artifact; });
+        return tmpArtifacts.map((artifact) => {
+            artifact.built = fulfillHtml(template2)({ "data": nodeToString(fold(artifact.built)) });
+            return artifact;
+        });
+    };
+}
+
+function gBuildNM1(template1,template2,template3) {
+    return function(artifacts) {
+        logAugmentationData("gBuildNM1", artifacts);
+        var tmpArtifacts = gBuildNMN(template1,template2)(artifacts);
+        return fulfillHtml(template3)({ "data": nodeToString(fold(tmpArtifacts.map(getValue("built")))) });
+    };
+}
+
+function nodeToString(item) {
+    var tmp = document.createElement("div");
+    tmp.appendChild(item.getElementsByTagName("body")[0].firstChild);
+    return tmp.innerHTML;
+}
+
+function fulfillHtml(template) {
+    return (data) => { return htmlFromString(fulfillTemplate(template, data)); };
+}
+
+function fulfillTemplate(template, data) {
+    var tmp = template;
+    var toFulfill = tmp.match(/{{(.*?)}}/g);
+    toFulfill.forEach(function (e, i, a) {
+        tmp = tmp.replace(e, data[e.slice(2, e.length - 2)]);
+    });
+    return tmp;
+}
+
+function fold(htmls) {
+    return htmls.reduce(
+        (total, current) => {
+            total.getElementsByTagName("body")[0].firstChild.appendChild(
+                current.getElementsByTagName("body")[0].firstChild);
+            return total; },
+        (new DOMParser()).parseFromString("<div></div>", "text/html"));
+}
+
+function htmlFromString(string) {
+    return (new DOMParser()).parseFromString(string, "text/html");
+}
+
+// injection functions
+
+function gInjectN(nodeGetter, injection) {
+    return function(artifacts) {
+        logAugmentationData("gInjectN", artifacts);
+        artifacts.forEach((artifact) => {
+            injection(nodeGetter(artifact), artifact.built.getElementsByTagName("body")[0].firstChild);
+        });
+    };
+}
+
+function gInject1(nodeGetter, injection) {
+    return function(builtElement) {
+        logAugmentationData("gInject1", builtElement);
+        injection(nodeGetter(), builtElement.getElementsByTagName("body")[0].firstChild);
+    };
+}
+
+function logAugmentationData(stage, artifacts) {
+    console.log(stage);
+    console.log(artifacts);
+}

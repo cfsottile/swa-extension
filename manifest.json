@@ -6,7 +6,8 @@
   
   "content_scripts": [
     {
-      "matches": ["*://*.imdb.com/*"],
+      // "matches": ["*://*.imdb.com/*"],
+      "matches": ["http://www.imdb.com/help/?ref_=nb_hlp", "https://help.imdb.com/imdb?ref_=nb_hlp"],
       "js": ["content_script.js"]
     }
   ],
@@ -17,7 +18,9 @@
 
   "permissions": [
     "activeTab",
-    "tabs"
+    "tabs",
+    "https://dbpedia.org/sparql?query=*",
+    "webRequest"
   ],
 
   "browser_action": {

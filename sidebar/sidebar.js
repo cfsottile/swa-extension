@@ -40,9 +40,13 @@ console.log("loading sidebar");
 
 browser.tabs
     .query({ currentWindow: true, active: true })
-    .then((tabs) => 
+    .then((tabs) => {
         browser.tabs.executeScript(
             tabs[0].id,
-            { file: "/content_scripts/content_script.js" }));
+            { file: "/content_scripts/content_script.js" });
+        // browser.tabs.executeScript(
+        //     tabs[0].id,
+        //     { file: "/content_scripts/augmentation.js" });
+    });
 
 browser.runtime.onMessage.addListener(setXpath);
