@@ -198,6 +198,7 @@ function autoParser(templateQuery) {
 
 const injectionStrategies = {
     "append": (targetNode, nodeToInject) => targetNode.appendChild(nodeToInject)
+    // "after": (targetNode, nodeToInject) => targetNode
 }
 
 function sidebarHtml() {
@@ -366,10 +367,6 @@ function gExtract(parser) {
 function gFetch(baseQuery, parser) {
     return function(artifacts) {
         logAugmentationData("gFetch", artifacts);
-        // asdasdasd.asdasd;
-        // logAugmentationData("gFetch", artifacts
-        //                                 .map(updateArtifact("fetched",query(baseQuery),"extracted"))
-        //                                 .map(updateArtifact("fetched",parser,"fetched")));
         return artifacts
             .map(updateArtifact("fetched",query(baseQuery),"extracted"))
             .map(updateArtifact("fetched",parser,"fetched"));
@@ -484,6 +481,6 @@ function gInject1(nodeGetter, injection) {
 }
 
 function logAugmentationData(stage, artifacts) {
-    console.log(stage);
-    console.log(artifacts);
+    // console.log(stage);
+    // console.log(artifacts);
 }
