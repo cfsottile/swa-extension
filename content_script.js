@@ -181,7 +181,6 @@ function genInject() {
 }
 
 function preAugment() {
-    console.log("SOY EL CODIGO NUEVO");
     augment(genSelect(), genExtract(), genFetch(), genBuild(), genInject());
 }
 
@@ -327,6 +326,7 @@ function lookupElementByXPath(path) {
 
 function updateArtifact(curr,fn,prev) {
     return (artifact) => {
+        // console.log("adding", curr, "applying", fn, "to", artifact[prev]);
         artifact[curr] = fn(artifact[prev]);
         return artifact;
     };
@@ -393,9 +393,8 @@ function buildURI(query) {
     return "https://dbpedia.org/sparql?query=" + encodeURIComponent(query) + "&format=json";
 }
 
-// args will be a map
 function buildQuery(base, args) {
-    return fulfillTemplate(base, args);
+    return base.replace(/{{.+?}}/g, args);
 }
 
 // building functions

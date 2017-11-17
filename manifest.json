@@ -7,7 +7,7 @@
   "content_scripts": [
     {
       // "matches": ["*://*.imdb.com/*"],
-      "matches": ["http://www.imdb.com/help/?ref_=nb_hlp", "https://help.imdb.com/imdb?ref_=nb_hlp"],
+      "matches": ["*://www.imdb.com/*"],
       "js": ["content_script.js"]
     },
     {
