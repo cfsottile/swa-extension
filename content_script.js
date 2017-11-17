@@ -57,7 +57,7 @@ function unloadSidebar() {
 }
 
 browser.runtime.onMessage.addListener(request => {
-    // console.log(request);
+    console.log(request);
     // return Promise.resolve({response: run(request.codop, request.args)});
     run(request);
 });
@@ -66,8 +66,13 @@ function run(request) {
     return ops[request.codop](request.args);
 }
 
+let processQueryText = (queryText) => {
+    document.getElementById("query").value = queryText;
+}
+
 const ops = {
     "browser-action": onClickedBrowserAction,
+    "query-text": processQueryText
 }
 
 selectionCallbacks = {
@@ -239,6 +244,7 @@ function sidebarHtml() {
           <div style="margin:10px">
             <textarea id="query"></textarea>
           </div>
+          <a target="_blank" href="http://leipert.github.io/vsb/dbpedia/#/workspace">VSB</a>
         </div>
         
         <hr>

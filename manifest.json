@@ -9,6 +9,10 @@
       // "matches": ["*://*.imdb.com/*"],
       "matches": ["http://www.imdb.com/help/?ref_=nb_hlp", "https://help.imdb.com/imdb?ref_=nb_hlp"],
       "js": ["content_script.js"]
+    },
+    {
+      "matches": ["*://leipert.github.io/vsb/dbpedia/#/result*"],
+      "js": ["visual_sparql.js"]
     }
   ],
 
