@@ -191,7 +191,8 @@ const extractionStrategies = {
 
 function autoParser(templateQuery) {
     return (data) => {
-        const projection = templateQuery.split("where {")[0].match(/\s\?(.*?)\s/g);
+        // console.log(templateQuery, data);
+        const projection = templateQuery.split("WHERE")[0].match(/\s\?(.*?)\s/g);
         let result = {};
         projection
             .map((e) => e.slice(2, e.length - 1))
