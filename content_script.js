@@ -9,6 +9,7 @@ function doCurrentTab(fn) {
 
 var loaded = false;
 var originalPadding = document.getElementsByTagName("body")[0].style["padding-left"];
+var data;
 
 function onClickedBrowserAction() {
     if (loaded) { unloadSidebar(); }
@@ -47,6 +48,8 @@ function setScripts(doc) {
     doc.getElementById("builder-select").onchange = adjustBuilderSelection;
     doc.getElementById("injector-button").onclick = select("injector");
     doc.getElementById("augment-button").onclick = preAugment;
+    doc.getElementById("vsb-button").onclick = openVSB;
+    console.log("loaded")
 }
 
 function unloadSidebar() {
@@ -63,11 +66,26 @@ browser.runtime.onMessage.addListener(request => {
 });
 
 function run(request) {
-    return ops[request.codop](request.args);
+    fn = ops[request.codop]
+    if (fn !== undefined) {
+        fn(request.args);
+    } else {
+        console.log("Message not understood");
+    }
 }
 
 let processQueryText = (queryText) => {
     document.getElementById("query").value = queryText;
+}
+
+function openVSB() {
+    console.log("Opening VSB");
+    console.log(data);
+    browser.runtime.sendMessage({
+        kind: "newtab",
+        url: "http://leipert.github.io/vsb/dbpedia/#/workspace",
+        data: data
+    })
 }
 
 const ops = {
@@ -88,10 +106,16 @@ function getXpath(stage) {
     return mouseEvent => {
         document.removeEventListener("dblclick", selectionCallbacks[stage]);
         // disable hightlighting
+        data = preExtract(mouseEvent.target);
         document.getElementById(stage + "-xpath-label").textContent =
             createXPathFromElement(mouseEvent.target);
     }
 } 
+
+function preExtract(node) {
+    const extractionStrategy = document.getElementById("extractor-select").value;
+    return extractionStrategies[extractionStrategy](node);
+}
 
 function adjustBuilderSelection() {
     switch (document.getElementById("builder-select").value) {
@@ -244,7 +268,7 @@ function sidebarHtml() {
           <div style="margin:10px">
             <textarea id="query"></textarea>
           </div>
-          <a target="_blank" href="http://leipert.github.io/vsb/dbpedia/#/workspace">VSB</a>
+          <input id="vsb-button" type="button" value="Visual SPARQL Builder">
         </div>
         
         <hr>

@@ -9,6 +9,7 @@ function doCurrentTab(fn) {
 
 var loaded = false;
 var originalPadding = document.getElementsByTagName("body")[0].style["padding-left"];
+var data = setDataNode("");
 
 function onClickedBrowserAction() {
     if (loaded) { unloadSidebar(); }
@@ -27,6 +28,7 @@ function prepareSidebar() {
     setStyles(sidebar);
     let tmpdoc = (new DOMParser()).parseFromString(sidebarHtml(), 'text/html');
     setScripts(tmpdoc);
+    tmpdoc.body.firstChild.append(data);
     sidebar.appendChild(tmpdoc.body.firstChild);
     return sidebar;
 }
@@ -49,7 +51,10 @@ let replace = () => {
 }
 
 let sendQuery = () => {
-    browser.runtime.sendMessage({query: document.getElementById("sparql-query").textContent})
+    browser.runtime.sendMessage({
+        codop: "query-text",
+        query: document.getElementById("sparql-query").textContent
+    })
 }
 
 function setScripts(doc) {
@@ -64,34 +69,53 @@ function unloadSidebar() {
     sidebar.parentElement.removeChild(sidebar);
 }
 
+const ops = {
+    "browser-action": onClickedBrowserAction,
+    "data": setDataNode
+}
+
+function run(request) {
+    let fn = ops[request.codop];
+    if (fn !== undefined) {
+        fn(request.query);
+    } else {
+        console.log("Message not understood");
+    }
+}
+
 browser.runtime.onMessage.addListener(request => {
     console.log(request);
     // return Promise.resolve({response: run(request.codop, request.args)});
     run(request);
 });
 
-function run(request) {
-    return ops[request.codop](request.args);
-}
-
 let processQueryText = (queryText) => {
     document.getElementById("query").value = queryText;
 }
 
-const ops = {
-    "browser-action": onClickedBrowserAction
+function setDataNode(str) {
+    data = (new DOMParser()).parseFromString(dataDiv(str), 'text/html').body.firstChild;
 }
 
 function sidebarHtml() {
     return `
         <div>
         <h3>Semantic Web Augmentation</h3>
-            <div>
-                Replace <input type="text" name="replaced" id="swa-text-replaced"><br>
-                with <input type="text" name="replacement" id="swa-text-replacement"><br>
-                <button type="button" id="swa-btn-replace">Replace</button>
-                <button type="button" id="swa-btn-query-ready">Send query</button>
-            </div>
+        <div>
+            Replace <input type="text" name="replaced" id="swa-text-replaced"><br>
+            with <input type="text" name="replacement" id="swa-text-replacement"><br>
+            <button type="button" id="swa-btn-replace">Replace</button>
+            <button type="button" id="swa-btn-query-ready">Send query</button>
+        </div>
         </div>
     `;
+}
+
+function dataDiv(data) {
+    return `
+        <div>
+            <h4>Data</h4>
+            <p>` + data + `</p>
+        </div>
+    `
 }

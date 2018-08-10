@@ -8,23 +8,33 @@
     {
       // "matches": ["*://*.imdb.com/*"],
       "matches": ["*://www.imdb.com/*"],
-      "js": ["content_script.js"]
-    },
-    {
-      "matches": ["*://leipert.github.io/*"],
-      "js": ["visual_sparql.js"]
+      "js": [
+        "node_modules/webextension-polyfill/dist/browser-polyfill.js",
+        "content_script.js"
+      ]
     }
+    // {
+    //   "matches": ["*://leipert.github.io/*"],
+    //   // "js": [
+    //   //   // "node_modules/webextension-polyfill/dist/browser-polyfill.js",
+    //   //   // "visual_sparql.js"
+    //   // ]
+    // }
   ],
 
   "background": {
-    "scripts": ["background.js"]
+    "scripts": [
+      "node_modules/webextension-polyfill/dist/browser-polyfill.js",
+      "background.js"
+    ]
   },
 
   "permissions": [
     "activeTab",
     "tabs",
     "https://dbpedia.org/sparql?query=*",
-    "webRequest"
+    "webRequest",
+    "*://leipert.github.io/*"
   ],
 
   "browser_action": {
