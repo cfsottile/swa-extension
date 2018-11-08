@@ -45,14 +45,14 @@ function setStyles(sidebar) {
     sidebar.style["background-color"] = 'white';
 }
 
-let replace = () => {
+function replace() {
     let toBeReplaced = document.getElementById("swa-text-replaced").value;
     let replacement = "{{" + document.getElementById("swa-text-replacement").value + "}}";
     let query = document.getElementById("sparql-query").textContent;
     document.getElementById("sparql-query").textContent = query.replace(new RegExp(toBeReplaced, 'g'), replacement);
 }
 
-let sendQuery = () => {
+function sendQuery() {
     browser.runtime.sendMessage({
         codop: "query-text",
         query: document.getElementById("sparql-query").textContent
@@ -91,7 +91,7 @@ browser.runtime.onMessage.addListener(request => {
     run(request);
 });
 
-let processQueryText = (queryText) => {
+function processQueryText(queryText) {
     document.getElementById("query").value = queryText;
 }
 

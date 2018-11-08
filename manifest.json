@@ -1,5 +1,5 @@
 {
-  "description": "Adds a sidebar offerin a file picker and drap and drop zone. When an image file is chosen the active tab's body content is replaced with file selected. See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Examples#imagify",
+  "description": "SWA",
   "manifest_version": 2,
   "name": "SWA",
   "version": "1.0",
@@ -10,6 +10,10 @@
       "matches": ["*://www.imdb.com/*"],
       "js": [
         "node_modules/webextension-polyfill/dist/browser-polyfill.js",
+        "sidebar.js",
+        "augmentation-core.js",
+        "augmentation-handler.js",
+        "sidebar-handler.js",
         "content_script.js"
       ]
     }
