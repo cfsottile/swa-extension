@@ -29,26 +29,6 @@ const ops = {
     "query-text": processQueryText
 }
 
-selectionCallbacks = {
-    "selector": getXpath("selector"),
-    "injector": getXpath("injector")
-}
-
-function getXpath(stage) {
-    return mouseEvent => {
-        document.removeEventListener("dblclick", selectionCallbacks[stage]);
-        // disable hightlighting
-        setData(preExtract(mouseEvent.target));
-        document.getElementById(stage + "-xpath-label").textContent =
-            createXPathFromElement(mouseEvent.target);
-    }
-} 
-
-function preExtract(node) {
-    const extractionStrategy = document.getElementById("extractor-select").value;
-    return extractionStrategies[extractionStrategy](node);
-}
-
 // extern helper
 
 function createXPathFromElement(elm) { 

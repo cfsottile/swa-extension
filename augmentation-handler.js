@@ -65,6 +65,7 @@ function preAugment() {
 
 const extractionStrategies = {
     "text content": (node) => node.textContent,
+    "cleaned text content": (node) => node.textContent.trim(),
     "href": (node) => node.href
 };
 
