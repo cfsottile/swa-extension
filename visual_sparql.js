@@ -9,9 +9,14 @@ function doCurrentTab(fn) {
 
 var loaded = false;
 var originalPadding = document.getElementsByTagName("body")[0].style["padding-left"];
-var dataStr = ""
+var subjects = []
 var dataNode;
 setDataNode("");
+
+const ops = {
+    "browser-action": onClickedBrowserAction,
+    "data": setDataNode
+}
 
 function onClickedBrowserAction() {
     if (loaded) { unloadSidebar(); }
@@ -28,7 +33,7 @@ function prepareSidebar() {
     var sidebar = document.createElement("div");
     sidebar.id = '__swa_sidebar';
     setStyles(sidebar);
-    let tmpdoc = (new DOMParser()).parseFromString(sidebarHtml(dataStr), 'text/html');
+    let tmpdoc = (new DOMParser()).parseFromString(sidebarHtml(subjects), 'text/html');
     setScripts(tmpdoc);
     tmpdoc.body.firstChild.append(dataNode);
     sidebar.appendChild(tmpdoc.body.firstChild);
@@ -71,11 +76,6 @@ function unloadSidebar() {
     sidebar.parentElement.removeChild(sidebar);
 }
 
-const ops = {
-    "browser-action": onClickedBrowserAction,
-    "data": setDataNode
-}
-
 function run(request) {
     let fn = ops[request.codop];
     if (fn !== undefined) {
@@ -95,30 +95,56 @@ function processQueryText(queryText) {
     document.getElementById("query").value = queryText;
 }
 
-function setDataNode(str) {
-    dataStr = str;
-    dataNode = (new DOMParser()).parseFromString(dataDiv(str), 'text/html').body.firstChild;
+// ss : [(Value,Rol)]
+function setDataNode(ss) {
+    console.log(ss);
+    subjects = ss;
+    dataNode = stringToNode(dataDiv(), 'text/html');
+    ss.forEach((subject) => dataNode.appendChild(stringToNode(dataDiv(subject), 'text/html')))
 }
 
-function sidebarHtml(data) {
+function sidebarHtml(subjects) {
     return `
         <div>
-        <h3>Semantic Web Augmentation</h3>
-        <div>
-            Value <input type="text" name="replaced" id="swa-text-replaced" value="` + data + `"><br>
-            has role <input type="text" name="replacement" id="swa-text-replacement"><br>
-            <button type="button" id="swa-btn-replace">Generalize</button>
-            <button type="button" id="swa-btn-query-ready">Send query</button>
-        </div>
+            <h3>Semantic Web Augmentation</h3>
+            <div>
+                <button type="button" id="swa-btn-replace">Generalize</button>
+                <button type="button" id="swa-btn-query-ready">Send query</button>
+            </div>
         </div>
     `;
 }
 
-function dataDiv(data) {
+/*
+    PURPOSE:
+        describes the HTML node corresponding to the div containing subjects
+        data.
+*/
+function dataDiv() {
     return `
-        <div>
+        <div id="swa-subjects-data">
             <h4>Data</h4>
-            <span>` + data + `</span>
         </div>
     `
+}
+
+/*
+    PURPOSE: describes the HTML node corresponding to 'subject' data.
+    PARAMS: subject :: {value,role}
+*/
+function subjectDiv(subject) {
+    return `
+        <div>
+            Value <input type="text" name="replaced" value="${subject.value}"><br>
+            has role <input type="text" name="replacement" value="${subject.role}"><br>
+        <div>
+    `
+}
+
+/*
+    PURPOSE: transforms 'str' into an HTML node
+    PARAMS: str :: String
+*/
+function stringToNode(str) {
+    return (new DOMParser()).parseFromString(str, 'text/html').body.firstChild;
 }

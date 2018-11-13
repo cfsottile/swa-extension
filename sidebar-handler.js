@@ -1,23 +1,39 @@
 // import { sidebarHtml } from 'sidebar';
 // import { preAugment, adjustBuilderSelection } from 'augmentation-handler'
 
-// export { toogleSidebar, setData };
+// export { toogleSidebar, addData };
 
 var loaded = false;
 var originalPadding = document.getElementsByTagName("body")[0].style["padding-left"];
 
-var data;
+var data = [];
+var amountOfEntries = 0;
+var entriesStatus = [false];
+
+function listeningEntry() {
+    return entriesStatus.indexOf(true);
+}
+
+function startListening(entryNumber) {
+    entriesStatus[entryNumber] = true;
+}
+
+function cleanEntriesStatus() {
+    entriesStatus = entriesStatus.map(() => false);
+}
 
 function toogleSidebar() {
     if (loaded) { unloadSidebar(); }
     else { loadSidebar(); }
 }
 
-function setData(d) {
-    data = d
+function addData(d) {
+    data.push(d)
 }
 
 function loadSidebar() {
+    console.log("hola");
+    document.addEventListener("dblclick", select);
     document.getElementsByTagName("body")[0].style["padding-left"] = "350px";
     loaded = true;
     document.getElementsByTagName("body")[0].appendChild(prepareSidebar());
@@ -44,10 +60,10 @@ function setStyles(sidebar) {
 }
 
 function setScripts(doc) {
-    doc.getElementById("selector-button").onclick = select("selector");
+    doc.getElementById("selector-add").onclick = addSelectionEntry;
     doc.getElementById("builder-select").selectedIndex = -1;
     doc.getElementById("builder-select").onchange = adjustBuilderSelection;
-    doc.getElementById("injector-button").onclick = select("injector");
+    doc.getElementById("injector-button").onclick = injectionCallback;
     doc.getElementById("augment-button").onclick = preAugment;
     doc.getElementById("vsb-button").onclick = openVSB;
     console.log("loaded")
@@ -62,16 +78,35 @@ function unloadSidebar() {
 
 function openVSB() {
     console.log("Opening VSB");
-    console.log(data);
     browser.runtime.sendMessage({
         kind: "newtab",
         url: "http://leipert.github.io/vsb/dbpedia/#/workspace",
-        data: data
+        data: selections()
     })
 }
 
-function select(stage) {
-    return () => document.addEventListener("dblclick", selectionCallbacks[stage])
+function injectionCallback() {
+    return mouseEvent => {
+        document.removeEventListener("dblclick", injectionCallback);
+        // disable hightlighting
+        document.getElementById("injector-xpath-label").textContent =
+            createXPathFromElement(mouseEvent.target);
+    }
+}
+
+function selections() {
+    let data = [];
+    for (var i = 1; i <= amountOfEntries; i++) {
+        data.push(getSelection(i))
+    }
+    return data;
+}
+
+function getSelection(entryNumber) {
+    return {
+        role: document.getElementById(`swa-selection-data-${entryNumber}`).value,
+        value: document.getElementById(`swa-selection-role-${entryNumber}`).value
+    }
 }
 
 function adjustBuilderSelection() {
@@ -114,4 +149,64 @@ function addTextAreas(textAreasDiv, n) {
 
 function setManyInjections(bool) {
     document.getElementById("injector-many").checked = bool;
+}
+
+function addSelectionEntry() {
+    amountOfEntries += 1;
+    entriesStatus.push(false);
+    newEntry = (new DOMParser()).parseFromString(selectionHtml(amountOfEntries), 'text/html');
+    newEntry.getElementById("select-element-" + amountOfEntries).onclick = selectionListener(amountOfEntries);
+    document.getElementById("selector-group").appendChild(newEntry.body.firstChild);
+}
+
+function selectionListener(entryNumber) {
+    return () => startListening(entryNumber);
+}
+
+function select(mouseEvent) {
+    console.log(this, entriesStatus);
+    let entryNumber = listeningEntry();
+    if (entryNumber != -1) {
+        cleanEntriesStatus();
+        let selectionValue = preExtract(mouseEvent.target, entryNumber);
+        addSelection(selectionValue, entryNumber);
+        document.getElementById(`selector-xpath-label-${entryNumber}`).textContent =
+            createXPathFromElement(mouseEvent.target);
+    }
+    console.log(selections());
+}
+
+function preExtract(node, entryNumber) {
+    console.log("swa-extraction-" + entryNumber);
+    const extractionStrategy = document.getElementById("swa-extraction-" + entryNumber).value;
+    return extractionStrategies[extractionStrategy](node);
+}
+
+function addSelection(selectionValue, entryNumber) {
+    // data.push(selection);
+    document.getElementById("swa-selection-data-" + entryNumber).value = selectionValue;
+}
+
+function selectionHtml(entryNumber) {
+    return `
+        <div>
+            <input type="button" id="select-element-${entryNumber}" value="Select element">
+            <div>
+            <label>Role</label>
+            <input type="text" name="replacement" id="swa-selection-role-${entryNumber}">
+            </div>
+            <div>
+            <label>Value</label>
+            <input type="text" name="replaced" id="swa-selection-data-${entryNumber}">
+            </div>
+            <label>Data extraction strategy:</label>
+            <select id="swa-extraction-${entryNumber}">
+                <option>cleaned text content</option>
+                <option>text content</option>
+                <option>href</option>
+            </select>
+            <div style="margin:10px">
+                <label id="selector-xpath-label-${entryNumber}"></label>
+            </div>
+        </div>`
 }

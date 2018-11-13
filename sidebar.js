@@ -9,25 +9,9 @@ function sidebarHtml() {
     
         <div id="selector" style="margin:10px">
             <h3>Selection</h3>
-            <div style="margin:10px">
-            <input type="button" id="selector-button" value="Select structure">
-            <input type="checkbox" id="selector-many"> <label>Many</label>
-            </div>
-            <div style="margin:10px">
-            <label id="selector-xpath-label"></label>
-            </div>
-        </div>
-    
-        <hr>
-    
-        <div id="extractor" style="margin:10px">
-            <h3>Extraction</h3>
-            <div style="margin:10px">
-            <label>Data extraction strategy:</label>
-            <select id="extractor-select">
-            <option>text content</option>
-            <option>href</option>
-            </select>
+            <div style="margin:10px" id="selector-group">
+                <input type="button" id="selector-add" value="Add selection">
+                <input type="checkbox" id="selector-many"> <label>Many</label>
             </div>
         </div>
     
