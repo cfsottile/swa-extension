@@ -51,7 +51,7 @@ function sidebarHtml() {
             </select>
             </div>
             <div style="margin:10px">
-            <label id="injector-xpath-label"></label>
+            <label hidden id="injector-xpath-label"></label>
             </div>      
         </div>
         

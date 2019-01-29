@@ -4,20 +4,41 @@
 
 // export { preAugment, adjustBuilderSelection };
 
+// type Selection  = HtmlNode
+// type Extraction = Map String String
+// type Fetching   = Map String String
+
+// selectionEntries :: [HtmlNode]
+function selectionEntries() {
+    return Array.from(document.getElementsByClassName("selection-entry"));
+}
+
+// genSelect :: () -> [Augmentation]
 function genSelect() {
-    const xpath = document.getElementById("selector-xpath-label").textContent;
-    let selection = lookupElementByXPath(xpath);
-    if (!document.getElementById("selector-many").checked) {
-        selection = [selection];
-    }
-    return gSelect(() => selection);
+    return gSelect(() => selections());
 }
 
+// selections :: [Selection]
+function selections() {
+    return [selectionEntries()];
+}
+
+// genExtract :: [Augmentation] -> [Augmentation]
 function genExtract() {
-    const extractionStrategy = document.getElementById("extractor-select").value;
-    return gExtract(extractionStrategies[extractionStrategy]);
+    return gExtract(selectionEntries().map(extractorOf));
 }
 
+// extractorOf :: Selection -> () -> Extraction
+function extractorOf(selectionNode) {
+    let i = selectionNode.firstElementChild.id.split("-")[2];
+    return () => {
+        return {
+        role: document.getElementById(`swa-selection-role-${i}`).value,
+        data: document.getElementById(`swa-selection-data-${i}`).value}
+    }
+}
+
+// genFetch :: 
 function genFetch() {
     const templateQuery = document.getElementById("query").value;
     return gFetch(templateQuery, autoParser(templateQuery));

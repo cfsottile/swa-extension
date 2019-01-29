@@ -6,10 +6,11 @@
 
 // helpers
 
-function updateArtifact(curr,fn,prev) {
+function updateArtifact(curr,f,prev) {
     return (artifact) => {
-        // console.log("adding", curr, "applying", fn, "to", artifact[prev]);
-        artifact[curr] = fn(artifact[prev]);
+        console.log("[updateArtifact] adding", curr, "applying", f, "to", artifact[prev]);
+        console.log("[updateArtifact] result", f(artifact[prev]));
+        artifact[curr] = f(artifact[prev]);
         return artifact;
     };
 }
@@ -20,7 +21,7 @@ function getValue(property) {
     };
 }
 
-function getElementByXpath (path) {
+function getElementByXpath(path) {
     return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
 
@@ -33,31 +34,38 @@ function augment(select, extract, fetch, build, inject) {
 
 // selection functions
 
-function gSelect(parser) {
-    return () => {
-        return parser().map((element) => { return {"selected": element}; });
-    };
+// data Augmentation = Aug [Selection] [Extraction] [Fetching] [Building] [Injection]
+
+// gSelect :: (() -> [HtmlNode]) -> () -> [Augmentation]
+function gSelect(select) {
+    return () => select().map((selectionNodes) => ({"selected": selectionNodes}))
 }
 
 // extraction functions
+// gExtract :: [Selection -> Extraction] -> [Augmentation] -> [Augmentation]
+// POST: resulting augmentations has the field "extracted" fulfilled
+function gExtract(extractors) {
+    // apExtract :: [Selection] -> [Extraction]
+    let apExtract = (selectionNode) => ap(extractors, selectionNode);
+    return (artifacts) => artifacts.map(updateArtifact("extracted",apExtract,"selected"));
+}
 
-// :: (HtmlNode -> [String]) -> ([{"selected": HtmlNode}] -> [{"selected": HtmlNode, "extracted": [String]}])
-function gExtract(parser) {
-    return function(artifacts) {
-        logAugmentationData("gExtract", artifacts);
-        return artifacts.map(updateArtifact("extracted",parser,"selected"));
-    };
+// ap :: [a -> b] -> [a] -> [b]
+const ap = ([f, ...fs], [x, ...xs]) => {
+    return (
+    (f === undefined) ? []
+                      : [f(x), ...ap(fs, xs)])
 }
 
 // fetching functions
 
 // ::
-function gFetch(baseQuery, parser) {
+function gFetch(baseQuery, fetch) {
     return function(artifacts) {
         logAugmentationData("gFetch", artifacts);
         return artifacts
             .map(updateArtifact("fetched",query(baseQuery),"extracted"))
-            .map(updateArtifact("fetched",parser,"fetched"));
+            .map(updateArtifact("fetched",fetch,"fetched"));
     };
 }
 
@@ -78,10 +86,30 @@ function buildURI(query) {
     return uri;
 }
 
-function buildQuery(base, value) {
-    console.log("VALUE:", value);
-    return base.replace(/{{.+?}}/g, value);
+function buildQuery(base, extractions) {
+    let values = valuesFrom(extractions);
+    console.log(values);
+    let replace = (str, key) => str.replace(new RegExp(`{{${key}}}`, 'g'), values[key]);
+    return Object.keys(values).reduce(replace, base);
 }
+
+function valuesFrom(extractions) {
+    return valuesToMap(extractions).reduce(addAttribute,{});
+}
+
+function valuesToMap(values) {
+    return values.map((v) => {
+        let res = {};
+        res[v.role] = v.data;
+        return res;
+    })
+}
+
+function addAttribute(obj, kv) {
+    let k = Object.keys(kv);
+    obj[k] = kv[k];
+    return obj;
+} 
 
 // building functions
 

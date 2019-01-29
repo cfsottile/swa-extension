@@ -63,7 +63,7 @@ function setScripts(doc) {
     doc.getElementById("selector-add").onclick = addSelectionEntry;
     doc.getElementById("builder-select").selectedIndex = -1;
     doc.getElementById("builder-select").onchange = adjustBuilderSelection;
-    doc.getElementById("injector-button").onclick = injectionCallback;
+    doc.getElementById("injector-button").onclick = injectionListener;
     doc.getElementById("augment-button").onclick = preAugment;
     doc.getElementById("vsb-button").onclick = openVSB;
     console.log("loaded")
@@ -81,20 +81,11 @@ function openVSB() {
     browser.runtime.sendMessage({
         kind: "newtab",
         url: "http://leipert.github.io/vsb/dbpedia/#/workspace",
-        data: selections()
+        data: _selections()
     })
 }
 
-function injectionCallback() {
-    return mouseEvent => {
-        document.removeEventListener("dblclick", injectionCallback);
-        // disable hightlighting
-        document.getElementById("injector-xpath-label").textContent =
-            createXPathFromElement(mouseEvent.target);
-    }
-}
-
-function selections() {
+function _selections() {
     let data = [];
     for (var i = 1; i <= amountOfEntries; i++) {
         data.push(getSelection(i))
@@ -104,8 +95,8 @@ function selections() {
 
 function getSelection(entryNumber) {
     return {
-        role: document.getElementById(`swa-selection-data-${entryNumber}`).value,
-        value: document.getElementById(`swa-selection-role-${entryNumber}`).value
+        role: document.getElementById(`swa-selection-role-${entryNumber}`).value,
+        value: document.getElementById(`swa-selection-data-${entryNumber}`).value
     }
 }
 
@@ -163,17 +154,25 @@ function selectionListener(entryNumber) {
     return () => startListening(entryNumber);
 }
 
+function injectionListener() {
+    return startListening(0);
+}
+
 function select(mouseEvent) {
     console.log(this, entriesStatus);
     let entryNumber = listeningEntry();
     if (entryNumber != -1) {
         cleanEntriesStatus();
-        let selectionValue = preExtract(mouseEvent.target, entryNumber);
-        addSelection(selectionValue, entryNumber);
-        document.getElementById(`selector-xpath-label-${entryNumber}`).textContent =
-            createXPathFromElement(mouseEvent.target);
+        if (entryNumber == 0) {
+            document.getElementById("injector-xpath-label").textContent =
+                createXPathFromElement(mouseEvent.target);
+        } else {
+            let selectionValue = preExtract(mouseEvent.target, entryNumber);
+            addSelection(selectionValue, entryNumber);
+            document.getElementById(`selector-xpath-label-${entryNumber}`).textContent =
+                createXPathFromElement(mouseEvent.target);
+        }
     }
-    console.log(selections());
 }
 
 function preExtract(node, entryNumber) {
@@ -189,7 +188,7 @@ function addSelection(selectionValue, entryNumber) {
 
 function selectionHtml(entryNumber) {
     return `
-        <div>
+        <div class="selection-entry">
             <input type="button" id="select-element-${entryNumber}" value="Select element">
             <div>
             <label>Role</label>
@@ -206,7 +205,7 @@ function selectionHtml(entryNumber) {
                 <option>href</option>
             </select>
             <div style="margin:10px">
-                <label id="selector-xpath-label-${entryNumber}"></label>
+                <label hidden id="selector-xpath-label-${entryNumber}"></label>
             </div>
         </div>`
 }

@@ -10,8 +10,7 @@ function doCurrentTab(fn) {
 var loaded = false;
 var originalPadding = document.getElementsByTagName("body")[0].style["padding-left"];
 var subjects = []
-var dataNode;
-setDataNode("");
+var dataNode;;
 
 const ops = {
     "browser-action": onClickedBrowserAction,
@@ -27,6 +26,9 @@ function loadSidebar() {
     document.getElementsByTagName("body")[0].style["padding-left"] = "350px";
     loaded = true;
     document.getElementsByTagName("body")[0].appendChild(prepareSidebar());
+    browser.runtime.sendMessage({
+        kind: "vsb-ready"
+    })
 }
 
 function prepareSidebar() {
@@ -35,6 +37,7 @@ function prepareSidebar() {
     setStyles(sidebar);
     let tmpdoc = (new DOMParser()).parseFromString(sidebarHtml(subjects), 'text/html');
     setScripts(tmpdoc);
+    dataNode = stringToNode(dataDiv(), 'text/html');
     tmpdoc.body.firstChild.append(dataNode);
     sidebar.appendChild(tmpdoc.body.firstChild);
     return sidebar;
@@ -50,11 +53,31 @@ function setStyles(sidebar) {
     sidebar.style["background-color"] = 'white';
 }
 
+// function replace() {
+//     let toBeReplaced = document.getElementById("swa-text-replaced").value;
+//     let replacement = "{{" + document.getElementById("swa-text-replacement").value + "}}";
+//     let query = document.getElementById("sparql-query").textContent;
+//     document.getElementById("sparql-query").textContent = query.replace(new RegExp(toBeReplaced, 'g'), replacement);
+// }
+
 function replace() {
-    let toBeReplaced = document.getElementById("swa-text-replaced").value;
-    let replacement = "{{" + document.getElementById("swa-text-replacement").value + "}}";
+    let replacements = document.getElementById("swa-subjects-data").getElementsByTagName("div");
     let query = document.getElementById("sparql-query").textContent;
-    document.getElementById("sparql-query").textContent = query.replace(new RegExp(toBeReplaced, 'g'), replacement);
+    for (var i = 0; i < replacements.length; i++) {
+        console.log("replacing", value(replacements[i]), role(replacements[i]));
+        query = query.replace(
+            new RegExp(value(replacements[i]), 'g'),
+            "{{" + role(replacements[i]) + "}}");
+    }
+    document.getElementById("sparql-query").textContent = query;
+}
+
+function value(div) {
+    return div.children[0].value
+}
+
+function role(div) {
+    return div.children[2].value
 }
 
 function sendQuery() {
@@ -79,6 +102,7 @@ function unloadSidebar() {
 function run(request) {
     let fn = ops[request.codop];
     if (fn !== undefined) {
+        console.log(request.query);
         fn(request.query);
     } else {
         console.log("Message not understood");
@@ -96,11 +120,13 @@ function processQueryText(queryText) {
 }
 
 // ss : [(Value,Rol)]
-function setDataNode(ss) {
-    console.log(ss);
-    subjects = ss;
-    dataNode = stringToNode(dataDiv(), 'text/html');
-    ss.forEach((subject) => dataNode.appendChild(stringToNode(dataDiv(subject), 'text/html')))
+function setDataNode(subjectsData) {
+    console.log(subjectsData);
+    subjects = subjectsData;
+    subjectsData.forEach((subject) => {
+        console.log("appending", subject, dataNode);
+        dataNode.appendChild(stringToNode(subjectDiv(subject), 'text/html'));
+    })
 }
 
 function sidebarHtml(subjects) {
@@ -137,7 +163,7 @@ function subjectDiv(subject) {
         <div>
             Value <input type="text" name="replaced" value="${subject.value}"><br>
             has role <input type="text" name="replacement" value="${subject.role}"><br>
-        <div>
+        </div>
     `
 }
 

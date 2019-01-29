@@ -10,20 +10,24 @@
       "matches": ["*://www.imdb.com/*"],
       "js": [
         "node_modules/webextension-polyfill/dist/browser-polyfill.js",
+        "pageSelector.js",
         "sidebar.js",
         "augmentation-core.js",
         "augmentation-handler.js",
         "sidebar-handler.js",
         "content_script.js"
+      ],
+      "css": [
+        "andes-highlighting.css"
+      ]
+    },
+    {
+      "matches": ["*://leipert.github.io/*"],
+      "js": [
+        "node_modules/webextension-polyfill/dist/browser-polyfill.js",
+        "visual_sparql.js"
       ]
     }
-    // {
-    //   "matches": ["*://leipert.github.io/*"],
-    //   // "js": [
-    //   //   // "node_modules/webextension-polyfill/dist/browser-polyfill.js",
-    //   //   // "visual_sparql.js"
-    //   // ]
-    // }
   ],
 
   "background": {
