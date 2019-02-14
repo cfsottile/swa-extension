@@ -61,6 +61,7 @@ function setStyles(sidebar) {
 
 function setScripts(doc) {
     doc.getElementById("selector-add").onclick = addSelectionEntry;
+    doc.getElementById("selector-many").onchange = handleManySelections;
     doc.getElementById("builder-select").selectedIndex = -1;
     doc.getElementById("builder-select").onchange = adjustBuilderSelection;
     doc.getElementById("injector-button").onclick = injectionListener;
@@ -142,6 +143,32 @@ function setManyInjections(bool) {
     document.getElementById("injector-many").checked = bool;
 }
 
+function handleManySelections() {
+    checked = document.getElementById("selector-many").checked;
+    if (checked) {
+        addManySelectionsUI();
+    } else {
+        removeManySelectionsUI();
+    }
+}
+
+function addManySelectionsUI() {
+    let selectionEntries = Array.from(document.getElementById("selector-group").getElementsByClassName("selection-entry"));
+    selectionEntries.forEach((se) => {
+        let entryNumber = selectionEntryNumber(se);
+        se.appendChild(stringToNode(divSelectionMany(entryNumber)));
+        document.getElementById(`select-many-first-${entryNumber}`).onclick = 
+        document.getElementById(`select-many-second-${entryNumber}`).onclick = 
+        document.getElementById(`select-many-last-${entryNumber}`).onclick = 
+    });
+}
+
+// :: HtmlNode -> Int
+// PRE: 'selectionEntry' has the structure of the selection entry div
+function selectionEntryNumber(selectionEntry) {
+    return selectionEntry.firstElementChild.id.split("-").pop();
+}
+
 function addSelectionEntry() {
     amountOfEntries += 1;
     entriesStatus.push(false);
@@ -166,11 +193,13 @@ function select(mouseEvent) {
         if (entryNumber == 0) {
             document.getElementById("injector-xpath-label").textContent =
                 createXPathFromElement(mouseEvent.target);
-        } else {
+        } else if (entryNumber <= amountOfEntries) {
             let selectionValue = preExtract(mouseEvent.target, entryNumber);
             addSelection(selectionValue, entryNumber);
             document.getElementById(`selector-xpath-label-${entryNumber}`).textContent =
                 createXPathFromElement(mouseEvent.target);
+        } else {
+
         }
     }
 }
@@ -207,5 +236,15 @@ function selectionHtml(entryNumber) {
             <div style="margin:10px">
                 <label hidden id="selector-xpath-label-${entryNumber}"></label>
             </div>
+        </div>`
+}
+
+function divSelectionMany(entryNumber) {
+    return `
+        <div id="selection-many-div-${entryNumber}">
+            <input type="button" id="select-many-second-${entryNumber}" value="2nd el">
+            <input type="button" id="select-many-last-${entryNumber}" value="Last el">
+            <label hidden id="select-many-second-label-${entryNumber}"></label>
+            <label hidden id="select-many-last-label-${entryNumber}"></label>
         </div>`
 }

@@ -117,4 +117,45 @@ function lookupElementByXPath(path) {
     var evaluator = new XPathEvaluator(); 
     var result = evaluator.evaluate(path, document.documentElement, null,XPathResult.FIRST_ORDERED_NODE_TYPE, null); 
     return  result.singleNodeValue; 
-} 
+}
+
+// :: String -> String -> [String]
+// POST: Resulting list has two elements.
+// PRE: args are equal except for some non-side located substring.
+function subs(xs,ys) {
+    return [untilDiff(xs,ys), fromDiff(xs,ys)]
+}
+
+function untilDiff(xs, ys) {
+    return untilDiffR(xs,ys).join("")
+}
+
+function untilDiffR([x, ...xs], [y, ...ys]) {
+    if (x === y) {
+        return [x, ...(untilDiff(xs,ys))]
+    } else {
+        return []
+    }
+}
+
+function fromDiff(xs,ys) {
+    return reverseStr(untilDiff(reverseStr(xs),reverseStr(ys)))
+}
+
+function steppedRange(from, to, step) {
+    let arr = [];
+    for (var i = from; i <= to; i = i + step) {
+        arr.push(i)
+    }
+    return arr;
+}
+
+// Computes the numbers where xpaths differs
+function nums(xpaths) {
+    let [prefix, suffix] = subs(xpath[0], xpath[1]);
+    return xpaths.map((xpath) => xpath.substring(prefix.length, xpath.length - suffix.length));
+}
+
+function xPathsFromSamples(samples) {
+    
+}
