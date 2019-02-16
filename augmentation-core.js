@@ -186,8 +186,8 @@ function htmlFromString(string) {
 function gInjectN(nodeGetter, injection) {
     return function(artifacts) {
         logAugmentationData("gInjectN", artifacts);
-        artifacts.forEach((artifact) => {
-            injection(nodeGetter(artifact), artifact.built.getElementsByTagName("body")[0].firstChild);
+        artifacts.forEach((artifact, i) => {
+            injection(nodeGetter(artifact, i), artifact.built.getElementsByTagName("body")[0].firstChild);
         });
     };
 }

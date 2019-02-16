@@ -19,7 +19,7 @@ function genSelect() {
 }
 
 // selections :: [Selection]
-function selections() {
+selections = () => {
     return [selectionEntries()];
 }
 
@@ -70,11 +70,14 @@ function getBuilderInputs(n) {
 }
 
 function genInject() {
-    const xpath = document.getElementById("injector-xpath-label").textContent;
+    const xpath = document.getElementById("injector-xpath-label-1").textContent;
     const many = document.getElementById("injector-many").checked;
     const strategy = document.getElementById("injector-select").value;
     if (many) {
-        return gInjectN(() => lookupElementByXPath(xpath), injectionStrategies[strategy]);
+        let samples = [document.getElementById('injector-xpath-label-1').textContent, document.getElementById('injector-xpath-label-2').textContent];
+        let elements = elementsFromXpaths(xPathsFromSamples(samples));
+        console.log(elements);
+        return gInjectN((artifact, i) => elements[i], injectionStrategies[strategy]);
     } else {
         return gInject1(() => lookupElementByXPath(xpath), injectionStrategies[strategy]);
     }
@@ -142,6 +145,8 @@ function fromDiff(xs,ys) {
     return reverseStr(untilDiff(reverseStr(xs),reverseStr(ys)))
 }
 
+function reverseStr(str) { return str.split("").reverse().join("") }
+
 function steppedRange(from, to, step) {
     let arr = [];
     for (var i = from; i <= to; i = i + step) {
@@ -152,10 +157,25 @@ function steppedRange(from, to, step) {
 
 // Computes the numbers where xpaths differs
 function nums(xpaths) {
-    let [prefix, suffix] = subs(xpath[0], xpath[1]);
+    let [prefix, suffix] = subs(xpaths[0], xpaths[1]);
     return xpaths.map((xpath) => xpath.substring(prefix.length, xpath.length - suffix.length));
 }
 
 function xPathsFromSamples(samples) {
-    
+    let [from, to] = nums(samples).map(str => parseInt(str));
+    let indexes = steppedRange(from, to, 1);
+    let baseXpath = subs(samples[0], samples[1]);
+    return indexes.map(i => baseXpath.join(i));
+}
+
+function elementsFromXpaths(xpaths) {
+    console.log(xpaths.map(x => lookupElementByXPath(x)));
+    return xpaths.map(x => lookupElementByXPath(x));
+}
+
+function updateManySelectionsFunc() {
+    selections = () => {
+        let samples = [document.getElementById('selector-xpath-label-1-1').textContent, document.getElementById('selector-xpath-label-1-2').textContent];
+        return elementsFromXpaths(xPathsFromSamples(samples));
+    }
 }

@@ -8,19 +8,6 @@ var originalPadding = document.getElementsByTagName("body")[0].style["padding-le
 
 var data = [];
 var amountOfEntries = 0;
-var entriesStatus = [false];
-
-function listeningEntry() {
-    return entriesStatus.indexOf(true);
-}
-
-function startListening(entryNumber) {
-    entriesStatus[entryNumber] = true;
-}
-
-function cleanEntriesStatus() {
-    entriesStatus = entriesStatus.map(() => false);
-}
 
 function toogleSidebar() {
     if (loaded) { unloadSidebar(); }
@@ -32,8 +19,7 @@ function addData(d) {
 }
 
 function loadSidebar() {
-    console.log("hola");
-    document.addEventListener("dblclick", select);
+    document.addEventListener("dblclick", updateListener);
     document.getElementsByTagName("body")[0].style["padding-left"] = "350px";
     loaded = true;
     document.getElementsByTagName("body")[0].appendChild(prepareSidebar());
@@ -64,7 +50,7 @@ function setScripts(doc) {
     doc.getElementById("selector-many").onchange = handleManySelections;
     doc.getElementById("builder-select").selectedIndex = -1;
     doc.getElementById("builder-select").onchange = adjustBuilderSelection;
-    doc.getElementById("injector-button").onclick = injectionListener;
+    doc.getElementById("injector-button").onclick = injectionListener(doc.getElementById("injector"), 1);
     doc.getElementById("augment-button").onclick = preAugment;
     doc.getElementById("vsb-button").onclick = openVSB;
     console.log("loaded")
@@ -89,7 +75,7 @@ function openVSB() {
 function _selections() {
     let data = [];
     for (var i = 1; i <= amountOfEntries; i++) {
-        data.push(getSelection(i))
+        data.push(getSelection(i + "-1"));
     }
     return data;
 }
@@ -146,9 +132,10 @@ function setManyInjections(bool) {
 function handleManySelections() {
     checked = document.getElementById("selector-many").checked;
     if (checked) {
+        updateManySelectionsFunc();
         addManySelectionsUI();
     } else {
-        removeManySelectionsUI();
+        // removeManySelectionsUI();
     }
 }
 
@@ -157,52 +144,66 @@ function addManySelectionsUI() {
     selectionEntries.forEach((se) => {
         let entryNumber = selectionEntryNumber(se);
         se.appendChild(stringToNode(divSelectionMany(entryNumber)));
-        document.getElementById(`select-many-first-${entryNumber}`).onclick = 
-        document.getElementById(`select-many-second-${entryNumber}`).onclick = 
-        document.getElementById(`select-many-last-${entryNumber}`).onclick = 
+        console.log(se, entryNumber);
+        se.querySelector(`#select-many-last-${entryNumber}`).onclick =
+            selectionNListener(se, `${entryNumber}-2`);
     });
+    let injectorDiv = document.getElementById('injector').children[1];
+    injector.appendChild(stringToNode(divInjectionMany()));
+    injector.querySelector("#inject-many-2").onclick =
+        injectionListener(injector, 2);
+
 }
 
 // :: HtmlNode -> Int
 // PRE: 'selectionEntry' has the structure of the selection entry div
 function selectionEntryNumber(selectionEntry) {
-    return selectionEntry.firstElementChild.id.split("-").pop();
+    return selectionEntry.firstElementChild.id.split("-").slice(-2,-1)[0];
 }
 
 function addSelectionEntry() {
     amountOfEntries += 1;
-    entriesStatus.push(false);
+    currentEntryNumber = amountOfEntries + "-1";
     newEntry = (new DOMParser()).parseFromString(selectionHtml(amountOfEntries), 'text/html');
-    newEntry.getElementById("select-element-" + amountOfEntries).onclick = selectionListener(amountOfEntries);
+    newEntry.getElementById(`select-element-${currentEntryNumber}`).onclick =
+        selectionListener(newEntry, currentEntryNumber);
     document.getElementById("selector-group").appendChild(newEntry.body.firstChild);
 }
 
-function selectionListener(entryNumber) {
-    return () => startListening(entryNumber);
+function selectionListener(entry, entryNumber) {
+    let currentLabel = entry.getElementById(`selector-xpath-label-${entryNumber}`);
+    return () => startListening(selectionHandler(currentLabel, entryNumber));
 }
 
-function injectionListener() {
-    return startListening(0);
-}
-
-function select(mouseEvent) {
-    console.log(this, entriesStatus);
-    let entryNumber = listeningEntry();
-    if (entryNumber != -1) {
-        cleanEntriesStatus();
-        if (entryNumber == 0) {
-            document.getElementById("injector-xpath-label").textContent =
-                createXPathFromElement(mouseEvent.target);
-        } else if (entryNumber <= amountOfEntries) {
-            let selectionValue = preExtract(mouseEvent.target, entryNumber);
-            addSelection(selectionValue, entryNumber);
-            document.getElementById(`selector-xpath-label-${entryNumber}`).textContent =
-                createXPathFromElement(mouseEvent.target);
-        } else {
-
-        }
+function selectionHandler(currentLabel, entryNumber) {
+    return (mouseEvent) => {
+        let selectionValue = preExtract(mouseEvent.target, entryNumber);
+        addSelection(selectionValue, entryNumber);
+        currentLabel.textContent = createXPathFromElement(mouseEvent.target);
     }
 }
+
+function selectionNListener(entry, entryNumber) {
+    let currentLabel = entry.querySelector(`#selector-xpath-label-${entryNumber}`);
+    return () => startListening(genericHandler(currentLabel));
+}
+
+function injectionListener(entry, entryNumber) {
+    let currentLabel = entry.querySelector(`#injector-xpath-label-${entryNumber}`);
+    console.log(entry, entryNumber, currentLabel);
+    return () => startListening(genericHandler(currentLabel));
+}
+
+function genericHandler(currentLabel) {
+    return (mouseEvent) => {
+        console.log("changing", currentLabel, "with", createXPathFromElement(mouseEvent.target));
+        currentLabel.textContent = createXPathFromElement(mouseEvent.target);
+    }
+}
+
+// function select(mouseEvent) {
+//     updateListener(mouseEvent);
+// }
 
 function preExtract(node, entryNumber) {
     console.log("swa-extraction-" + entryNumber);
@@ -215,36 +216,10 @@ function addSelection(selectionValue, entryNumber) {
     document.getElementById("swa-selection-data-" + entryNumber).value = selectionValue;
 }
 
-function selectionHtml(entryNumber) {
-    return `
-        <div class="selection-entry">
-            <input type="button" id="select-element-${entryNumber}" value="Select element">
-            <div>
-            <label>Role</label>
-            <input type="text" name="replacement" id="swa-selection-role-${entryNumber}">
-            </div>
-            <div>
-            <label>Value</label>
-            <input type="text" name="replaced" id="swa-selection-data-${entryNumber}">
-            </div>
-            <label>Data extraction strategy:</label>
-            <select id="swa-extraction-${entryNumber}">
-                <option>cleaned text content</option>
-                <option>text content</option>
-                <option>href</option>
-            </select>
-            <div style="margin:10px">
-                <label hidden id="selector-xpath-label-${entryNumber}"></label>
-            </div>
-        </div>`
-}
-
-function divSelectionMany(entryNumber) {
-    return `
-        <div id="selection-many-div-${entryNumber}">
-            <input type="button" id="select-many-second-${entryNumber}" value="2nd el">
-            <input type="button" id="select-many-last-${entryNumber}" value="Last el">
-            <label hidden id="select-many-second-label-${entryNumber}"></label>
-            <label hidden id="select-many-last-label-${entryNumber}"></label>
-        </div>`
+/*
+    PURPOSE: transforms 'str' into an HTML node
+    PARAMS: str :: String
+*/
+function stringToNode(str) {
+    return (new DOMParser()).parseFromString(str, 'text/html').body.firstChild;
 }

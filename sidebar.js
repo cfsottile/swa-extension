@@ -51,7 +51,7 @@ function sidebarHtml() {
             </select>
             </div>
             <div style="margin:10px">
-            <label hidden id="injector-xpath-label"></label>
+            <label hidden id="injector-xpath-label-1"></label>
             </div>      
         </div>
         
@@ -60,4 +60,47 @@ function sidebarHtml() {
         <input type="button" id="augment-button" value="Augment" style="display: block; margin: 0 auto; margin-top: 30px">
         </div>
     `;
+}
+
+function selectionHtml(entryNumber) {
+    return `
+        <div class="selection-entry">
+            <input type="button" id="select-element-${entryNumber}-1" value="Select element">
+            <div>
+            <label>Role</label>
+            <input type="text" name="replacement" id="swa-selection-role-${entryNumber}-1">
+            </div>
+            <div>
+            <label>Value</label>
+            <input type="text" name="replaced" id="swa-selection-data-${entryNumber}-1">
+            </div>
+            <label>Data extraction strategy:</label>
+            <select id="swa-extraction-${entryNumber}-1">
+                <option>cleaned text content</option>
+                <option>text content</option>
+                <option>href</option>
+            </select>
+            <div style="margin:10px">
+                <label hidden id="selector-xpath-label-${entryNumber}-1"></label>
+            </div>
+        </div>`
+}
+
+function divSelectionMany(entryNumber) {
+    return `
+        <div id="selection-many-div-${entryNumber}">
+            <input type="button" id="select-many-last-${entryNumber}" value="Last el">
+            <label hidden id="selector-xpath-label-${entryNumber}-2"></label>
+        </div>`
+            // <input type="button" id="select-many-second-${entryNumber}" value="2nd el">
+            // <label hidden id="selector-xpath-label-${entryNumber}-3"></label>
+}
+
+function divInjectionMany() {
+    return `<div>
+                <input type="button" id="inject-many-2" value="Last el">
+                <label hidden id="injector-xpath-label-2"></label>
+            </div>`
+            // <input type="button" id="select-many-second-${entryNumber}" value="2nd el">
+            // <label hidden id="selector-xpath-label-${entryNumber}-3"></label>
 }
