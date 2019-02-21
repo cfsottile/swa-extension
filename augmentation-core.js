@@ -46,7 +46,9 @@ function gSelect(select) {
 // POST: resulting augmentations has the field "extracted" fulfilled
 function gExtract(extractors) {
     // apExtract :: [Selection] -> [Extraction]
-    let apExtract = (selectionNode) => ap(extractors, selectionNode);
+    let apExtract = (selectionNode) => {
+        console.log(extractors,selectionNode);
+        ap(extractors, selectionNode);}
     return (artifacts) => artifacts.map(updateArtifact("extracted",apExtract,"selected"));
 }
 
@@ -109,7 +111,7 @@ function addAttribute(obj, kv) {
     let k = Object.keys(kv);
     obj[k] = kv[k];
     return obj;
-} 
+}
 
 // building functions
 

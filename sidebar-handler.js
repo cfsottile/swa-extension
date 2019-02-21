@@ -135,13 +135,15 @@ function handleManySelections() {
         updateManySelectionsFunc();
         addManySelectionsUI();
     } else {
-        // removeManySelectionsUI();
+        rollbackManySelectionsFunc();
+        removeManySelectionsUI();
     }
 }
 
 function addManySelectionsUI() {
     let selectionEntries = Array.from(document.getElementById("selector-group").getElementsByClassName("selection-entry"));
     selectionEntries.forEach((se) => {
+        se.querySelector(".select-element").value = "Select first element";
         let entryNumber = selectionEntryNumber(se);
         se.appendChild(stringToNode(divSelectionMany(entryNumber)));
         console.log(se, entryNumber);
@@ -150,8 +152,12 @@ function addManySelectionsUI() {
     });
     let injectorDiv = document.getElementById('injector').children[1];
     injector.appendChild(stringToNode(divInjectionMany()));
+    injector.querySelector("#injector-button").value = "Select first node";
     injector.querySelector("#inject-many-2").onclick =
         injectionListener(injector, 2);
+}
+
+function removeManySelectionsUI() {
 
 }
 

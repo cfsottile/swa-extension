@@ -25,7 +25,7 @@ selections = () => {
 
 // genExtract :: [Augmentation] -> [Augmentation]
 function genExtract() {
-    return gExtract(selectionEntries().map(extractorOf));
+    return gExtract(extractionStrats());
 }
 
 // extractorOf :: Selection -> () -> Extraction
@@ -84,7 +84,12 @@ function genInject() {
 }
 
 function preAugment() {
-    augment(genSelect(), genExtract(), genFetch(), genBuild(), genInject());
+    // augment(genSelect(), genExtract(), genFetch(), genBuild(), genInject());
+    // let selectionType = SelectionEntrySingle;
+    // selections = select(selectionType.gather())
+    // console.log("Selection");
+    // extractions = extraction(gatherExtractors(), selections);
+    // console.log()
 }
 
 const extractionStrategies = {
@@ -174,8 +179,30 @@ function elementsFromXpaths(xpaths) {
 }
 
 function updateManySelectionsFunc() {
-    selections = () => {
-        let samples = [document.getElementById('selector-xpath-label-1-1').textContent, document.getElementById('selector-xpath-label-1-2').textContent];
-        return elementsFromXpaths(xPathsFromSamples(samples));
-    }
+    selections = selectionsMany;
+}
+
+function rollbackManySelectionsFunc() {
+    selections = selectionsSingle;
+}
+
+function inferRemainingMany(selectionEntry) {
+    let xpaths = Array.from(selectionEntry.querySelectorAll(".selector-xpath-label")).map(e => e.textContent)
+    return elementsFromXpaths(xPathsFromSamples(xpaths));
+}
+
+function extractionStrategyOf(selectionEntry) {
+    return selectionEntry.querySelector(".swa-extraction");
+}
+
+function selectionsSingle() {
+    return selectionEntries().map(se => lookupElementByXPath(se.querySelector(".selector-xpath-label").textContent));
+}
+
+function selectionsMany() {
+    return selectionEntries().map(inferRemainingMany);
+}
+
+function extractionStrats() {
+    return selectionEntries().map(se => extractionStrategies[extractionStrategyOf(se).value]);
 }
