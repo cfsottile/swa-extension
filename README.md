@@ -4,7 +4,7 @@ SWAX is a Chrome extension developed using WebExtensions. It allows end-users to
 
 ## Requisites
 
-* (`node.js`)[https://nodejs.org/]
+* [`node.js`](https://nodejs.org/)
 
 ## Installation
 
@@ -27,5 +27,5 @@ Note: The speed of the Semantic Web information gathering depends on DBpedia's S
 
 ## Demo
 
-* (One augmented element)[https://youtu.be/38jpS2qCn4w]
-* (Many augmented elements)[https://youtu.be/7nUVjLiH5pM] 
+* [One augmented element](https://youtu.be/38jpS2qCn4w)
+* [Many augmented elements](https://youtu.be/7nUVjLiH5pM)
