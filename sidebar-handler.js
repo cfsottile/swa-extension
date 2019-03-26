@@ -59,7 +59,7 @@ function setScripts(doc) {
     doc.querySelector("#builder-select").value = "Map";
     doc.getElementById("injector-button").onclick = injectionListener(doc.getElementById("injector"), 1);
     doc.getElementById("try-button").onclick = preAugment;
-    // doc.getElementById("save-button").onclick = preAugment;
+    doc.getElementById("save-button").onclick = () => alert("Work in progress");
     doc.getElementById("vsb-button").onclick = openVSB;
     doc.querySelectorAll(".next-button").forEach(e => e.onclick = () => stageHandler.next());
     doc.querySelectorAll(".previous-button").forEach(e => e.onclick = () => stageHandler.previous());
