@@ -39,12 +39,3 @@ function buildURI(query) {
     console.log("URI", uri);
     return uri;
 }
-
-function fulfillTemplate(template, data) {
-    let tmp = template;
-    let toFulfill = tmp.match(/{{(.*?)}}/g);
-    toFulfill.forEach(function (e, i, a) {
-        tmp = tmp.replace(e, data[e.slice(2, e.length - 2)]);
-    });
-    return tmp;
-}
