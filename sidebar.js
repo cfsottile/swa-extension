@@ -39,13 +39,13 @@ function sidebarHtml() {
                         <option class="building-stage">Converge</option>
                     </select>
                 </div>
-                <div style="margin-top:15px">
-                    <span>Available values</span>
-                    <div style="text-align:center; margin-top:5px; margin-bottom:12px">
-                        <input type="button" value="Person">
-                        <input type="button" value="Person_Label">
-                    </div>
-                    <span>HTML Template</span>
+                <div style="margin-top:15px">`+
+                    //<span>Available values</span>
+                    //<div style="text-align:center; margin-top:5px; margin-bottom:12px">
+                    //    <input type="button" value="Person">
+                    //    <input type="button" value="Person_Label">
+                    //</div>
+                    `<span>HTML Template</span>
                     <div id="swa-builder-textarea-div">
                         <div id="swa-builder-textarea">
                             <textarea id="building-1" style="margin-top: 2px; width: 304px; height: 91px;"></textarea>
